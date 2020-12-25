@@ -232,6 +232,10 @@ void Client::handle_events() {
             break;
         }
     }
+    // Event poll is empty -- relocate the mouse cursor, if necessary.
+    // Then clear the event poll.
+    video_engine->WarpMouseToMiddle();
+    while (SDL_PollEvent(&e));
 }
 
 void Client::update_mouse_button_state() {

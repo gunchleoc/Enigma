@@ -448,10 +448,13 @@ public:
 
     bool GetInputGrab() override { return SDL_GetWindowGrab(window) == SDL_TRUE; }
     bool SetInputGrab(bool enabled) override;
+    void WarpMouseToMiddle() override;
 
 private:
     bool OpenWindow(int width, int height, bool fullscreen);
     void CloseWindow();
+    int mid_x;
+    int mid_y;
 
     ecl::Screen *screen;
     SDL_Window *window;
@@ -468,7 +471,9 @@ VideoEngineImpl::VideoEngineImpl() :
     window(NULL),
     renderer(NULL),
     video_tileset(nullptr),
-    video_tileset_id(VTS_NONE)
+    video_tileset_id(VTS_NONE),
+    mid_x(2),
+    mid_y(2)
 {}
 
 VideoEngineImpl::~VideoEngineImpl() {
@@ -555,7 +560,7 @@ void VideoEngineImpl::Init() {
             }
         }
     }
-    // Save the de-facto modes (just in "app", not as preference).    
+    // Save the de-facto modes (just in "app", not as preference).
     if (video_engine->IsFullscreen()) {
         app.selectedFullscreenMode = FindFullscreenMode(ActiveWindowSize());
         app.selectedFullscreenTilesetId = GetTilesetId();
@@ -737,6 +742,8 @@ void VideoEngineImpl::SaveWindowSizePreferences() {
 void VideoEngineImpl::Resize(Sint32 width, Sint32 height) {
     SDL_SetWindowSize(window, width, height);
     SDL_RenderSetLogicalSize(renderer, width, height);
+    mid_x = width/2 + 1;
+    mid_y = height/2 + 1;
 }
 
 const VMInfo *VideoEngineImpl::GetInfo() {
@@ -827,6 +834,11 @@ bool VideoEngineImpl::OpenWindow(int width, int height, bool fullscreen) {
     const VMInfo *vminfo = GetInfo(video_mode);
     SDL_RenderSetLogicalSize(renderer, vminfo->width, vminfo->height);
 
+    // Save the midpoint for resetting the mouse cursor, if need be.
+    mid_x = width/2 + 1;
+    mid_y = height/2 + 1;
+
+    // Information for the mouse cursor.
     cursor.reset(new MouseCursor(screen));
     int x, y;
     SDL_GetMouseState(&x, &y);
@@ -929,8 +941,13 @@ bool VideoEngineImpl::SetInputGrab(bool enabled) {
     // Enigma starts using several windows, this needs to be adapted.
     bool old_state = GetInputGrab();
     SDL_SetWindowGrab(window, enabled ? SDL_TRUE : SDL_FALSE);
-    SDL_SetRelativeMouseMode(enabled ? SDL_TRUE : SDL_FALSE);
+    //SDL_SetRelativeMouseMode(enabled ? SDL_TRUE : SDL_FALSE);
+    SDL_SetRelativeMouseMode(SDL_FALSE);
     return old_state;
+}
+
+void VideoEngineImpl::WarpMouseToMiddle() {
+    SDL_WarpMouseInWindow(window, mid_x, mid_y);
 }
 
 // -------------------- Global variables & functions --------------------
