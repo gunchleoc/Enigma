@@ -449,12 +449,14 @@ public:
     bool GetInputGrab() override { return SDL_GetWindowGrab(window) == SDL_TRUE; }
     bool SetInputGrab(bool enabled) override;
     void WarpMouseToMiddle() override;
+    void ApplyRelativeMouseModeSetting() override { relativemousemode = app.prefs->getBool("RelativeMouseMode"); };
 
 private:
     bool OpenWindow(int width, int height, bool fullscreen);
     void CloseWindow();
     int mid_x;
     int mid_y;
+    bool relativemousemode; // true = automatically by SDL, false = manual
 
     ecl::Screen *screen;
     SDL_Window *window;
@@ -473,7 +475,8 @@ VideoEngineImpl::VideoEngineImpl() :
     video_tileset(nullptr),
     video_tileset_id(VTS_NONE),
     mid_x(2),
-    mid_y(2)
+    mid_y(2),
+    relativemousemode(false)
 {}
 
 VideoEngineImpl::~VideoEngineImpl() {
@@ -481,6 +484,7 @@ VideoEngineImpl::~VideoEngineImpl() {
 }
 
 void VideoEngineImpl::Init() {
+    ApplyRelativeMouseModeSetting();
     bool isFullScreen = app.prefs->getBool("FullScreen");
     // Sanitize and save preferences for fullscreen mode.
     FullscreenMode fmode = ParseVideomodesFallbackString(app.prefs->getString("VideoModesFullscreen"), true);
@@ -941,13 +945,18 @@ bool VideoEngineImpl::SetInputGrab(bool enabled) {
     // Enigma starts using several windows, this needs to be adapted.
     bool old_state = GetInputGrab();
     SDL_SetWindowGrab(window, enabled ? SDL_TRUE : SDL_FALSE);
-    //SDL_SetRelativeMouseMode(enabled ? SDL_TRUE : SDL_FALSE);
-    SDL_SetRelativeMouseMode(SDL_FALSE);
+    SDL_SetRelativeMouseMode((enabled && relativemousemode) ? SDL_TRUE : SDL_FALSE);
     return old_state;
 }
 
 void VideoEngineImpl::WarpMouseToMiddle() {
-    SDL_WarpMouseInWindow(window, mid_x, mid_y);
+    // Warping the mouse to the middle of the window generates a mouse
+    // motion event. We have to flush the corresponding event.
+    static SDL_Event e;
+    if (!relativemousemode) {
+        SDL_WarpMouseInWindow(window, mid_x, mid_y);
+        while (SDL_PollEvent(&e));
+    }
 }
 
 // -------------------- Global variables & functions --------------------

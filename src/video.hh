@@ -185,6 +185,7 @@ public:
     virtual bool GetInputGrab() = 0;
     virtual bool SetInputGrab(bool enabled) = 0;
     virtual void WarpMouseToMiddle() = 0;
+    virtual void ApplyRelativeMouseModeSetting() = 0;
 
 };
 

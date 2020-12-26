@@ -256,6 +256,10 @@ public:
         ScoreUploadButton() : BoolOptionButton("ScoreAutoUpload", N_("Always"), N_("Never"), this) {}
     };
 
+    struct RelativeMouseModeButton : public BoolOptionButton {
+        RelativeMouseModeButton() : BoolOptionButton("RelativeMouseMode", N_("Fast, might not work"), N_("Slow, more secure"), this) {}
+    };
+
     /* -------------------- FullscreenButton -------------------- */
     
     FullscreenButton::FullscreenButton(ActionListener *al)
@@ -791,6 +795,7 @@ public:
                 OPTIONS_NEW_LB(N_("Language: "), language = new LanguageButton(this))
                 OPTIONS_NEW_LB(N_("Mouse speed: "), new MouseSpeedButton())
                 OPTIONS_NEW_LB(N_("Middle mouse button: "), new MiddleMouseButtonButton())
+                OPTIONS_NEW_LB(N_("Relative Mouse Mode: "), new RelativeMouseModeButton())
                 OPTIONS_NEW_LB(N_("Text speed: "), new TextSpeedButton())
                 OPTIONS_NEW_LB(N_("Ratings update: "), new RatingsUpdateButton())
                 userNameTF = new TextField(app.state->getString("UserName"));
@@ -826,6 +831,7 @@ public:
     void OptionsMenu::close_page() {
         if (!gameIsOngoing)
             video_engine->ApplySettings();
+        video_engine->ApplyRelativeMouseModeSetting();
         // Reset active and key_focus widgets, they will be deleted soon,
         // and we don't want any ticks for them anymore.
         reset_active_widget();
